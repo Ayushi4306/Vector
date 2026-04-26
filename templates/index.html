@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Predictor • AI Gradient Descent Model</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 10% 20%, #0A0C12, #030507);
+            font-family: 'Inter', sans-serif;
+            padding: 2rem;
+            color: #EFF3F8;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #FFFFFF, #A0C8F5);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .header p {
+            color: #9BA4B5;
+            margin-top: 0.5rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
+        .card {
+            background: rgba(18, 24, 34, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(55, 138, 221, 0.25);
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .card .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #7F8C9A;
+            letter-spacing: 1px;
+        }
+        .card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            color: #5FADF0;
+        }
+        .prediction-box {
+            background: linear-gradient(135deg, rgba(55,138,221,0.15), rgba(31,90,158,0.1));
+            border-radius: 1.8rem;
+            border: 1px solid #378ADD;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .input-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            flex: 2;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            margin-bottom: 0.3rem;
+            color: #9BA4B5;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: #0A0F17;
+            border: 1px solid #2E3A48;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1.1rem;
+            font-family: 'Fira Code', monospace;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #378ADD;
+        }
+        .price-result {
+            background: rgba(0,0,0,0.4);
+            border-radius: 1rem;
+            padding: 0.8rem 1.5rem;
+            text-align: center;
+            min-width: 200px;
+        }
+        .price-result .prediction-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #7AEBC0;
+            font-family: 'Fira Code', monospace;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background: linear-gradient(95deg, #378ADD, #1F5A9E);
+            color: white;
+        }
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid #378ADD;
+            color: #5FADF0;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+        .chart-container {
+            background: rgba(6, 10, 16, 0.7);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(55,138,221,0.2);
+            padding: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .chart-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #A0B3D1;
+            margin-bottom: 0.8rem;
+        }
+        .training-controls {
+            background: rgba(10, 14, 21, 0.7);
+            border-radius: 1.2rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-item {
+            flex: 1;
+        }
+        .control-item label {
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type=range] {
+            width: 100%;
+            height: 4px;
+            background: #2D3A4B;
+            border-radius: 10px;
+        }
+        .badge {
+            background: #1E293B;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-family: monospace;
+        }
+        .loading {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        @media (max-width: 768px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-brain"></i> House Price Predictor</h1>
+        <p>Trained with Gradient Descent • Linear Regression from scratch • Real-time predictions</p>
+    </div>
+
+    <div class="grid-3">
+        <div class="card">
+            <div class="label"><i class="fas fa-chart-line"></i> MODEL ACCURACY (R²)</div>
+            <div class="value" id="r2-value">—</div>
+            <div class="label" style="font-size: 0.65rem;">Higher is better (max 1.0)</div>
+        </div>
+        <div class="card">
+            <div class="label"><i class="fas fa-weight-hanging"></i> WEIGHT (Slope)</div>
+            <div class="value" id="weight-value">—</div>
+            <div class="label">Price change per sq ft</div>
+        </div>
+        <div class="card">
+            <div class="label"><i class="fas fa-chart-simple"></i> MEAN SQUARED ERROR</div>
+            <div class="value" id="mse-value">—</div>
+            <div class="label">Lower is better</div>
+        </div>
+    </div>
+
+    <div class="prediction-box">
+        <h3 style="margin-bottom: 1rem;"><i class="fas fa-home"></i> Predict House Price</h3>
+        <div class="input-row">
+            <div class="input-group">
+                <label><i class="fas fa-vector-square"></i> SQUARE FEET (Area)</label>
+                <input type="number" id="sqft-input" placeholder="e.g., 1850" value="1850">
+            </div>
+            <div class="price-result">
+                <div style="font-size: 0.7rem; color: #9BA4B5;">PREDICTED PRICE</div>
+                <div class="prediction-price" id="predicted-price">$0</div>
+            </div>
+            <button class="btn btn-primary" id="predict-btn"><i class="fas fa-calculator"></i> Predict</button>
+        </div>
+    </div>
+
+    <div class="training-controls">
+        <div class="control-item">
+            <label>⚡ Learning Rate <span id="lr-val">0.02</span></label>
+            <input type="range" id="lr-slider" min="1" max="9" value="4" step="1">
+        </div>
+        <div class="control-item">
+            <label>🔄 Iterations <span id="iter-val">500</span></label>
+            <input type="range" id="iter-slider" min="100" max="800" value="500" step="50">
+        </div>
+        <button class="btn btn-secondary" id="retrain-btn"><i class="fas fa-rotate-right"></i> Retrain Model</button>
+        <span id="status-badge" class="badge"><i class="fas fa-check-circle"></i> Model Ready</span>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title"><i class="fas fa-chart-line"></i> LOSS CONVERGENCE (MSE during training)</div>
+        <div style="height: 220px;"><canvas id="loss-chart"></canvas></div>
+    </div>
+
+    <div class="info-tip" style="background: #1A2533; border-radius: 1rem; padding: 0.8rem; font-size: 0.75rem; border-left: 3px solid #378ADD;">
+        <i class="fas fa-flask"></i> <strong>How it works:</strong> The model learns the relationship between square footage and house price using <strong>Gradient Descent</strong>. 
+        It minimizes Mean Squared Error (MSE) by iteratively adjusting the weight (slope) and bias (intercept). The loss chart shows convergence to the optimal solution.
+    </div>
+</div>
+
+<script>
+    let lossChart = null;
+    const lrMap = [0.001, 0.003, 0.005, 0.01, 0.02, 0.04, 0.07, 0.1, 0.15];
+
+    async function loadModelInfo() {
+        try {
+            const response = await fetch('/api/model-info');
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('r2-value').innerHTML = data.r2.toFixed(4);
+                document.getElementById('weight-value').innerHTML = data.weight.toFixed(4);
+                document.getElementById('mse-value').innerHTML = data.mse.toFixed(2);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadLossHistory() {
+        try {
+            const response = await fetch('/api/loss-history');
+            const data = await response.json();
+            if (data.success && data.loss_history) {
+                drawLossChart(data.loss_history);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function drawLossHistoryFromModel(modelLoss) {
+        drawLossChart(modelLoss);
+    }
+
+    function drawLossChart(lossArray) {
+        const ctx = document.getElementById('loss-chart').getContext('2d');
+        if (lossChart) lossChart.destroy();
+        const labels = lossArray.map((_, i) => i);
+        lossChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Training MSE',
+                    data: lossArray,
+                    borderColor: '#5FADF0',
+                    borderWidth: 2,
+                    fill: true,
+                    backgroundColor: 'rgba(55,138,221,0.1)',
+                    pointRadius: 0,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { labels: { color: '#9BA4B5' } } },
+                scales: {
+                    x: { grid: { color: '#1F2A3A' }, ticks: { color: '#9BA4B5' } },
+                    y: { grid: { color: '#1F2A3A' }, ticks: { color: '#9BA4B5' } }
+                }
+            }
+        });
+    }
+
+    async function predictPrice() {
+        const sqft = parseFloat(document.getElementById('sqft-input').value);
+        if (isNaN(sqft) || sqft <= 0) {
+            document.getElementById('predicted-price').innerHTML = '$?';
+            return;
+        }
+        try {
+            const response = await fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sqft: sqft })
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('predicted-price').innerHTML = `$${data.price.toLocaleString()}`;
+            } else {
+                document.getElementById('predicted-price').innerHTML = '$Error';
+            }
+        } catch (e) {
+            document.getElementById('predicted-price').innerHTML = '$Error';
+        }
+    }
+
+    async function retrainModel() {
+        const lrIndex = parseInt(document.getElementById('lr-slider').value);
+        const learningRate = lrMap[lrIndex];
+        const iterations = parseInt(document.getElementById('iter-slider').value);
+        
+        const statusBadge = document.getElementById('status-badge');
+        statusBadge.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Training...';
+        statusBadge.classList.add('loading');
+        
+        try {
+            const response = await fetch('/api/retrain', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ learning_rate: learningRate, iterations: iterations })
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('r2-value').innerHTML = data.r2.toFixed(4);
+                document.getElementById('weight-value').innerHTML = data.weight.toFixed(4);
+                document.getElementById('mse-value').innerHTML = data.mse.toFixed(2);
+                if (data.loss_history) drawLossHistoryFromModel(data.loss_history);
+                statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Retrained!';
+                setTimeout(() => {
+                    statusBadge.innerHTML = '<i class="fas fa-check-circle"></i> Model Ready';
+                }, 2000);
+                predictPrice();
+            } else {
+                statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+            }
+        } catch (e) {
+            statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Failed';
+        }
+        statusBadge.classList.remove('loading');
+    }
+
+    document.getElementById('predict-btn').addEventListener('click', predictPrice);
+    document.getElementById('sqft-input').addEventListener('input', predictPrice);
+    document.getElementById('retrain-btn').addEventListener('click', retrainModel);
+    
+    document.getElementById('lr-slider').addEventListener('input', function() {
+        const idx = parseInt(this.value);
+        document.getElementById('lr-val').innerText = lrMap[idx];
+    });
+    document.getElementById('iter-slider').addEventListener('input', function() {
+        document.getElementById('iter-val').innerText = this.value;
+    });
+
+    loadModelInfo();
+    loadLossHistory();
+    setTimeout(predictPrice, 500);
+</script>
+</body>
+</html>
